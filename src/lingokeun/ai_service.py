@@ -42,12 +42,16 @@ class AIService():
         Keep the sentence structure simple and direct (Subject-Verb-Object), suitable for Intermediate learners.
         Make the sentences slightly longer and more detailed to increase the challenge.
         
-        Format: Just list the sentences directly with bullet points, no labels or descriptions.
+        **Requirements:**
+        - Sentences 1-4: Regular statements (positive sentences)
+        - Sentence 5: MUST be a negative sentence (using "tidak", "belum", "bukan", etc.)
+        - Sentence 6: MUST be a question sentence (using "apakah", "bagaimana", "kapan", etc.)
+        
+        Format: List each sentence with a blank line below for the answer.
         Example:
         - Saya akan mengirimkan pembaruan kode tersebut sore ini setelah meeting dengan tim.
-        - Apakah kita bisa mendiskusikan masalah ini di pertemuan besok pagi sebelum presentasi?
         - Tim kami tidak menemukan kesalahan di dalam dokumen persyaratan tersebut setelah review kedua.
-        - Saya sudah selesai memperbaiki bug itu, tetapi saya masih butuh waktu untuk memeriksa kodenya lagi dengan teliti.
+        - Apakah kita bisa mendiskusikan masalah ini di pertemuan besok pagi sebelum presentasi?
         
         ## 3. Daily Tip
         Provide one practical tip for improving English communication skills in a professional tech environment.
