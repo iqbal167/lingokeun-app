@@ -11,7 +11,7 @@ dependencies = [
 ]
 
 [project.scripts]
-lingokeun = "lingokeun.main:generate"
+lingokeun = "lingokeun.main:app"
 
 [tool.uv]
 package = true
