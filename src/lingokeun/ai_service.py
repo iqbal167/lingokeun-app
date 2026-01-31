@@ -139,6 +139,7 @@ class AIService():
         1. **B1 Level Accuracy** - Is the meaning correct? Are grammar and vocabulary appropriate for B1?
         2. **Nativeness** - How natural does it sound to a native English speaker?
         3. **Suggestions** - Provide a more natural alternative if needed
+        4. **Advanced Tips** - Suggest better phrasal verbs, collocations, prepositions, or idioms when applicable
         
         **Output format:**
         Create a review for each sentence with this structure:
@@ -159,6 +160,12 @@ class AIService():
         **Key Improvements:**
         - [Specific suggestion 1]
         - [Specific suggestion 2]
+        
+        **💡 Advanced Tips:** (if applicable)
+        - **Phrasal Verb:** [Suggest better phrasal verb if relevant, e.g., "look into" instead of "investigate"]
+        - **Collocation:** [Suggest natural word combinations, e.g., "make a decision" not "do a decision"]
+        - **Preposition:** [Correct preposition usage, e.g., "depend on" not "depend of"]
+        - **Idiom:** [Suggest relevant idiom if it makes the sentence more natural]
         
         ---
         
