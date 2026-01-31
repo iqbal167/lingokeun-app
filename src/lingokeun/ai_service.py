@@ -47,13 +47,25 @@ class AIService():
         - Sentence 5: MUST be a negative sentence (using "tidak", "belum", "bukan", etc.)
         - Sentence 6: MUST be a question sentence (using "apakah", "bagaimana", "kapan", etc.)
         
-        Format: List each sentence with a blank line below for the answer.
+        Format: List sentences directly without extra blank lines between them.
         Example:
         - Saya akan mengirimkan pembaruan kode tersebut sore ini setelah meeting dengan tim.
         - Tim kami tidak menemukan kesalahan di dalam dokumen persyaratan tersebut setelah review kedua.
         - Apakah kita bisa mendiskusikan masalah ini di pertemuan besok pagi sebelum presentasi?
         
-        ## 3. Daily Tip
+        ## 3. Conversation Transliteration Challenge
+        Create ONE short professional conversation between 2 people (Person A and Person B) in English.
+        The conversation should be about a common workplace scenario (meeting, code review, project discussion, etc.).
+        Keep it natural and conversational (4-6 exchanges total).
+        
+        Format: List dialogue lines directly without extra blank lines between them.
+        **Scenario:** [Brief context, e.g., "Discussing a bug fix in a code review"]
+        **A:** [English sentence]
+        **B:** [English sentence]
+        **A:** [English sentence]
+        (Continue for 4-6 exchanges)
+        
+        ## 4. Daily Tip
         Provide one practical tip for improving English communication skills in a professional tech environment.
         Keep it short, actionable, and relevant to the selected vocabulary.
         
@@ -176,6 +188,77 @@ class AIService():
         
         Use Bahasa Indonesia for explanations, but keep English examples in English.
         Be encouraging but honest about areas for improvement.
+        """
+        
+        try:
+            response = self.client.models.generate_content(
+                model='gemini-3-flash-preview',
+                contents=prompt
+            )
+            return response.text
+        except Exception as e:
+            return f"Error reviewing task: {str(e)}"
+
+    def review_task3(self, english_conversation: str, user_translations: str) -> str:
+        """
+        Review Task 3 (Conversation Transliteration Challenge).
+        Evaluates translation accuracy, naturalness, and conversational flow.
+        """
+        prompt = f"""
+        You are an expert English Tutor reviewing conversation transliteration exercises for a B1 (Intermediate) level student.
+        
+        **Original English conversation:**
+        {english_conversation}
+        
+        **Student's Indonesian translations:**
+        {user_translations}
+        
+        **Your task:**
+        For each dialogue line, evaluate:
+        1. **Translation Accuracy** - Is the meaning correctly conveyed in Indonesian?
+        2. **Naturalness** - Does it sound natural in Indonesian conversation?
+        3. **Context Awareness** - Does the translation maintain the conversational flow and tone?
+        
+        **Output format:**
+        Create a review for each dialogue line with this structure:
+        
+        ### Line 1 - Person A
+        **English:** [original line]
+        **Your Translation:** [student's answer]
+        **Accuracy:** ✓ Benar / ⚠️ Kurang Tepat / ✗ Salah
+        **Naturalness:** ⭐⭐⭐⭐⭐ (1-5 stars)
+        
+        **Feedback:**
+        - [Brief explanation in Bahasa Indonesia about accuracy and naturalness]
+        
+        **More Natural Alternative:**
+        "[Provide a more natural Indonesian version]"
+        
+        **💡 Tips:**
+        - [Specific suggestion about conversational Indonesian, informal vs formal register, common expressions]
+        
+        ---
+        
+        ### Line 2 - Person B
+        [Same format as above]
+        
+        ---
+        
+        At the end, provide:
+        
+        ## Overall Conversation Review
+        **Strengths:**
+        - [What the student did well]
+        
+        **Areas to Improve:**
+        - [Specific patterns or issues to work on]
+        
+        **Conversational Tips:**
+        - [Tips for translating conversations more naturally]
+        - [Common conversational expressions in Indonesian]
+        
+        Use Bahasa Indonesia for explanations, but keep English examples in English.
+        Be encouraging and focus on helping the student understand conversational nuances.
         """
         
         try:

@@ -1,10 +1,25 @@
 import typer
 from datetime import date, datetime
 from pathlib import Path
+import threading
+import time
+import sys
 from .ai_service import AIService
 
 # Inisialisasi aplikasi Typer
 app = typer.Typer()
+
+def show_spinner(stop_event, message="Processing"):
+    """Display a spinner animation while processing."""
+    spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+    idx = 0
+    while not stop_event.is_set():
+        sys.stdout.write(f'\r{spinner[idx]} {message}...')
+        sys.stdout.flush()
+        idx = (idx + 1) % len(spinner)
+        time.sleep(0.1)
+    sys.stdout.write('\r' + ' ' * (len(message) + 10) + '\r')
+    sys.stdout.flush()
 
 @app.command("generate")
 def generate():
@@ -27,12 +42,20 @@ def generate():
     try:
         # 2. Proses AI
         typer.secho("\n🤖 Menghubungi Gemini...", fg=typer.colors.YELLOW)
-        typer.echo("   Meminta AI memilih 5 kata teknis & membuat soal level B1...")
         
         service = AIService()
         
+        # Start spinner
+        stop_spinner = threading.Event()
+        spinner_thread = threading.Thread(target=show_spinner, args=(stop_spinner, "Generating task"))
+        spinner_thread.start()
+        
         # Panggil fungsi tanpa argumen
         markdown_content = service.generate_daily_task()
+        
+        # Stop spinner
+        stop_spinner.set()
+        spinner_thread.join()
 
         # 3. Cek Error dari Service
         if markdown_content.startswith("Error"):
@@ -58,7 +81,7 @@ def generate():
 @app.command("review")
 def review(
     task_date: str = typer.Argument(..., help="Task date in YYYY-MM-DD format"),
-    task_number: int = typer.Option(1, "--task", "-t", help="Task number to review (1 or 2)")
+    task_number: int = typer.Option(1, "--task", "-t", help="Task number to review (1, 2, or 3)")
 ):
     """
     Review completed task and append results to task file.
@@ -67,6 +90,7 @@ def review(
     Usage: 
     - uv run lingokeun review 2026-01-29 --task 1
     - uv run lingokeun review 2026-01-29 -t 2
+    - uv run lingokeun review 2026-01-29 -t 3
     """
     
     # Validate date format
@@ -100,15 +124,34 @@ def review(
     try:
         service = AIService()
         
+        # Start spinner
+        stop_spinner = threading.Event()
+        
         if task_number == 1:
             typer.secho("\n🤖 Reviewing Word Transformation Challenge...", fg=typer.colors.YELLOW)
+            spinner_thread = threading.Thread(target=show_spinner, args=(stop_spinner, "Reviewing Task 1"))
+            spinner_thread.start()
             review_result = service.review_task1(user_input)
+            stop_spinner.set()
+            spinner_thread.join()
         elif task_number == 2:
             typer.secho("\n🤖 Reviewing Translation Challenge...", fg=typer.colors.YELLOW)
             task_content = task_file.read_text(encoding="utf-8")
+            spinner_thread = threading.Thread(target=show_spinner, args=(stop_spinner, "Reviewing Task 2"))
+            spinner_thread.start()
             review_result = service.review_task2(task_content, user_input)
+            stop_spinner.set()
+            spinner_thread.join()
+        elif task_number == 3:
+            typer.secho("\n🤖 Reviewing Conversation Transliteration Challenge...", fg=typer.colors.YELLOW)
+            task_content = task_file.read_text(encoding="utf-8")
+            spinner_thread = threading.Thread(target=show_spinner, args=(stop_spinner, "Reviewing Task 3"))
+            spinner_thread.start()
+            review_result = service.review_task3(task_content, user_input)
+            stop_spinner.set()
+            spinner_thread.join()
         else:
-            typer.secho("❌ Invalid task number. Use 1 or 2", fg=typer.colors.RED)
+            typer.secho("❌ Invalid task number. Use 1, 2, or 3", fg=typer.colors.RED)
             raise typer.Exit(code=1)
         
         # Append review to task file
