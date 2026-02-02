@@ -1,7 +1,8 @@
 from .config import settings
 from google import genai
 
-class AIService():
+
+class AIService:
     def __init__(self):
         self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
@@ -65,27 +66,38 @@ class AIService():
         **A:** [English sentence]
         (Continue for 4-6 exchanges)
         
-        ## 4. Daily Tip
+        ## 4. Tense Construction Challenge
+        Create 3 workplace scenarios for sentence construction practice:
+        
+        **Scenario 1 (Simple Present):** Describe your daily routine or regular tasks at work
+        Example context: "What do you usually do during your workday?"
+        Write 1-2 sentences using Simple Present tense.
+        
+        **Scenario 2 (Simple Past):** Tell about something you completed or experienced recently
+        Example context: "Describe a bug you fixed or a meeting you attended yesterday"
+        Write 1-2 sentences using Simple Past tense.
+        
+        **Scenario 3 (Simple Future):** Explain your plans or predictions for upcoming work
+        Example context: "What will you work on next week or next sprint?"
+        Write 1-2 sentences using Simple Future tense (will/going to).
+        
+        ## 5. Daily Tip
         Provide one practical tip for improving English communication skills in a professional tech environment.
         Keep it short, actionable, and relevant to the selected vocabulary.
         
         **Do NOT provide the answer key yet.**
         """
-        
+
         try:
             response = self.client.models.generate_content(
-                model='gemini-3-flash-preview',
-                contents=prompt
+                model="gemini-3-flash-preview", contents=prompt
             )
             return response.text
         except Exception as e:
             return f"Error generating task from AI: {str(e)}"
 
     def review_task1(self, user_answers: str) -> str:
-        """
-        Review Task 1 (Word Transformation Challenge).
-        Returns corrections and meanings in table format.
-        """
+        """Review Task 1 (Word Transformation Challenge)."""
         prompt = f"""
         You are an expert English Tutor reviewing a student's word transformation exercise.
         
@@ -107,36 +119,20 @@ class AIService():
         - Status (✓ Benar / ✗ Salah / + Ditambahkan)
         - Arti (Indonesian meaning)
         
-        Example format:
-        
-        ### Word 1: Simplify
-        
-        | Form | Correct Answer | Student's Answer | Status | Arti |
-        |------|----------------|------------------|--------|------|
-        | Verb | Simplify | Simplify | ✓ Benar | Menyederhanakan |
-        | Noun | Simplification | Simplification | ✓ Benar | Penyederhanaan |
-        | Adjective | Simple | Simplified | ✗ Salah | Sederhana |
-        | Adverb | Simply | Kosong | + Ditambahkan | Dengan sederhana |
-        | Opposite | Complicate | Kosong | + Ditambahkan | Memperumit |
-        
         Provide the review in Bahasa Indonesia with a friendly, encouraging tone.
         Start with a brief summary of overall performance.
         """
-        
+
         try:
             response = self.client.models.generate_content(
-                model='gemini-3-flash-preview',
-                contents=prompt
+                model="gemini-3-flash-preview", contents=prompt
             )
             return response.text
         except Exception as e:
             return f"Error reviewing task: {str(e)}"
 
     def review_task2(self, indonesian_sentences: str, user_translations: str) -> str:
-        """
-        Review Task 2 (Translation Challenge).
-        Evaluates B1 level accuracy, nativeness, and provides natural alternatives.
-        """
+        """Review Task 2 (Translation Challenge)."""
         prompt = f"""
         You are an expert English Tutor reviewing translation exercises for a B1 (Intermediate) level student.
         
@@ -174,9 +170,9 @@ class AIService():
         - [Specific suggestion 2]
         
         **💡 Advanced Tips:** (if applicable)
-        - **Phrasal Verb:** [Suggest better phrasal verb if relevant, e.g., "look into" instead of "investigate"]
-        - **Collocation:** [Suggest natural word combinations, e.g., "make a decision" not "do a decision"]
-        - **Preposition:** [Correct preposition usage, e.g., "depend on" not "depend of"]
+        - **Phrasal Verb:** [Suggest better phrasal verb if relevant]
+        - **Collocation:** [Suggest natural word combinations]
+        - **Preposition:** [Correct preposition usage]
         - **Idiom:** [Suggest relevant idiom if it makes the sentence more natural]
         
         ---
@@ -189,21 +185,17 @@ class AIService():
         Use Bahasa Indonesia for explanations, but keep English examples in English.
         Be encouraging but honest about areas for improvement.
         """
-        
+
         try:
             response = self.client.models.generate_content(
-                model='gemini-3-flash-preview',
-                contents=prompt
+                model="gemini-3-flash-preview", contents=prompt
             )
             return response.text
         except Exception as e:
             return f"Error reviewing task: {str(e)}"
 
     def review_task3(self, english_conversation: str, user_translations: str) -> str:
-        """
-        Review Task 3 (Conversation Transliteration Challenge).
-        Evaluates translation accuracy, naturalness, and conversational flow.
-        """
+        """Review Task 3 (Conversation Transliteration Challenge)."""
         prompt = f"""
         You are an expert English Tutor reviewing conversation transliteration exercises for a B1 (Intermediate) level student.
         
@@ -239,11 +231,6 @@ class AIService():
         
         ---
         
-        ### Line 2 - Person B
-        [Same format as above]
-        
-        ---
-        
         At the end, provide:
         
         ## Overall Conversation Review
@@ -260,11 +247,72 @@ class AIService():
         Use Bahasa Indonesia for explanations, but keep English examples in English.
         Be encouraging and focus on helping the student understand conversational nuances.
         """
-        
+
         try:
             response = self.client.models.generate_content(
-                model='gemini-3-flash-preview',
-                contents=prompt
+                model="gemini-3-flash-preview", contents=prompt
+            )
+            return response.text
+        except Exception as e:
+            return f"Error reviewing task: {str(e)}"
+
+    def review_task4(self, user_answers: str) -> str:
+        """
+        Review Task 4 (Grammar and Structure Challenge).
+        Evaluates correct tense usage, sentence structure, and grammar.
+        """
+        prompt = f"""
+        You are an expert English Tutor reviewing grammar and structure exercises for a B1 (Intermediate) level student.
+        
+        **Student's answers:**
+        {user_answers}
+        
+        **Your task:**
+        Review each sentence for:
+        1. **Correct Tense Usage** - Is the appropriate tense used (Simple Present/Past/Future)?
+        2. **Grammar Accuracy** - Subject-verb agreement, word order, auxiliary verbs
+        3. **Sentence Structure** - Is the sentence well-formed and natural?
+        
+        **Output format:**
+        
+        ### Scenario 1: Simple Present
+        
+        **Sentence 1:**
+        **Your Answer:** [student's sentence]
+        **Grammar Check:** ✓ Correct / ✗ Incorrect
+        **Feedback:** [Brief explanation in Bahasa Indonesia]
+        **Correct Version:** "[If needed, provide corrected sentence]"
+        
+        (Repeat for sentences 2-3)
+        
+        ### Scenario 2: Simple Past
+        (Same format)
+        
+        ### Scenario 3: Simple Future
+        (Same format)
+        
+        ---
+        
+        ## Overall Grammar Review
+        
+        **Strengths:**
+        - What the student did well with tenses and structure
+        
+        **Common Mistakes:**
+        - Patterns of errors to watch out for
+        
+        **Grammar Tips:**
+        - **Simple Present:** Use for habits, facts, routines (I work, She codes, They meet)
+        - **Simple Past:** Use for completed actions (worked, coded, met)
+        - **Simple Future:** Use will/going to for plans (will work, is going to code)
+        
+        Use Bahasa Indonesia for explanations, but keep English examples in English.
+        Be encouraging and focus on helping the student master basic tenses.
+        """
+
+        try:
+            response = self.client.models.generate_content(
+                model="gemini-3-flash-preview", contents=prompt
             )
             return response.text
         except Exception as e:
