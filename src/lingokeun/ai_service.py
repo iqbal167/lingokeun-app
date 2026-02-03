@@ -55,31 +55,52 @@ class AIService:
         - Apakah kita bisa mendiskusikan masalah ini di pertemuan besok pagi sebelum presentasi?
         
         ## 3. Conversation Transliteration Challenge
-        Create ONE short professional conversation between 2 people (Person A and Person B) in English.
-        The conversation should be about a common workplace scenario (meeting, code review, project discussion, etc.).
+        Create ONE short professional conversation between 2 people with actual tech roles in English.
+        Use real roles like: Backend Engineer, Frontend Developer, PM (Product Manager), DevOps Engineer, QA Engineer, Tech Lead, Designer, etc.
+        The conversation should be about a common workplace scenario (meeting, code review, project discussion, deployment, etc.).
         Keep it natural and conversational (4-6 exchanges total).
         
-        Format: List dialogue lines directly without extra blank lines between them.
-        **Scenario:** [Brief context, e.g., "Discussing a bug fix in a code review"]
-        **A:** [English sentence]
-        **B:** [English sentence]
-        **A:** [English sentence]
+        Format:
+        **Scenario:** [Brief context, e.g., "Backend and Frontend discussing API integration"]
+        
+        **Backend:** [English sentence]
+        
+        **Frontend:** [English sentence]
+        
+        **Backend:** [English sentence]
+        
         (Continue for 4-6 exchanges)
         
-        ## 4. Tense Construction Challenge
-        Create 3 workplace scenarios for sentence construction practice:
+        Leave blank lines after each dialogue line for the student to write the Indonesian translation.
         
-        **Scenario 1 (Simple Present):** Describe your daily routine or regular tasks at work
-        Example context: "What do you usually do during your workday?"
-        Write 1-2 sentences using Simple Present tense.
+        ## 4. Grammar and Structure Challenge
+        Create 3 workplace scenarios, one for each tense:
         
-        **Scenario 2 (Simple Past):** Tell about something you completed or experienced recently
-        Example context: "Describe a bug you fixed or a meeting you attended yesterday"
-        Write 1-2 sentences using Simple Past tense.
+        **Scenario 1: Simple Present**
+        Describe a daily routine or regular work activity.
+        Provide 3 prompts for the student to write sentences using Simple Present.
+        Example prompts:
+        - (Your team / meet / every Monday)
+        - (The system / process / data automatically)
+        - (I / review / code before deployment)
         
-        **Scenario 3 (Simple Future):** Explain your plans or predictions for upcoming work
-        Example context: "What will you work on next week or next sprint?"
-        Write 1-2 sentences using Simple Future tense (will/going to).
+        **Scenario 2: Simple Past**
+        Describe a completed project or past event.
+        Provide 3 prompts for the student to write sentences using Simple Past.
+        Example prompts:
+        - (We / launch / the new feature yesterday)
+        - (The bug / cause / system downtime last week)
+        - (She / present / the results to stakeholders)
+        
+        **Scenario 3: Simple Future**
+        Describe upcoming plans or predictions.
+        Provide 3 prompts for the student to write sentences using Simple Future (will/going to).
+        Example prompts:
+        - (The team / deploy / the update next week)
+        - (I / attend / the conference in March)
+        - (We / migrate / to the new server soon)
+        
+        Format: List each prompt with a blank line below for the answer.
         
         ## 5. Daily Tip
         Provide one practical tip for improving English communication skills in a professional tech environment.
@@ -112,15 +133,21 @@ class AIService:
         4. Provide Indonesian meanings for each word form
         
         **Output format:**
-        Create a markdown table for each word with these columns:
-        - Form Type (Verb/Noun/Adjective/Adverb/Opposite)
-        - Correct Answer
-        - Student's Answer (show what they wrote, or "Kosong" if blank)
-        - Status (✓ Benar / ✗ Salah / + Ditambahkan)
-        - Arti (Indonesian meaning)
+        Start directly with word reviews. NO greeting or intro paragraphs.
         
-        Provide the review in Bahasa Indonesia with a friendly, encouraging tone.
-        Start with a brief summary of overall performance.
+        ### Word 1: [Word]
+        
+        | Form | Correct Answer | Student's Answer | Status | Arti |
+        |------|----------------|------------------|--------|------|
+        | Verb | ... | ... | ✓/✗/+ | ... |
+        
+        (Repeat for all words)
+        
+        ---
+        
+        **Summary:** [1-2 sentences only: overall score and main improvement area]
+        
+        Use Bahasa Indonesia. Be concise and direct.
         """
 
         try:
@@ -177,13 +204,9 @@ class AIService:
         
         ---
         
-        At the end, provide:
-        - Overall performance summary
-        - Common patterns to improve
-        - Encouragement and next steps
+        **Summary:** [2-3 sentences only: score, main patterns to improve, one actionable tip]
         
-        Use Bahasa Indonesia for explanations, but keep English examples in English.
-        Be encouraging but honest about areas for improvement.
+        Use Bahasa Indonesia for explanations. Be direct and concise. NO lengthy intro or closing paragraphs.
         """
 
         try:
@@ -206,46 +229,44 @@ class AIService:
         {user_translations}
         
         **Your task:**
-        For each dialogue line, evaluate:
-        1. **Translation Accuracy** - Is the meaning correctly conveyed in Indonesian?
-        2. **Naturalness** - Does it sound natural in Indonesian conversation?
-        3. **Context Awareness** - Does the translation maintain the conversational flow and tone?
+        Review translations with focus on CASUAL/INFORMAL workplace conversation style.
+        Evaluate:
+        1. **Translation Accuracy** - Is the meaning correct?
+        2. **Conversational Tone** - Does it sound like natural, casual workplace chat in Indonesian?
+        3. **Register** - Is it appropriately informal (not too formal/stiff)?
         
         **Output format:**
-        Create a review for each dialogue line with this structure:
         
-        ### Line 1 - Person A
-        **English:** [original line]
+        ### Scenario
+        **English:** [original scenario]
         **Your Translation:** [student's answer]
         **Accuracy:** ✓ Benar / ⚠️ Kurang Tepat / ✗ Salah
-        **Naturalness:** ⭐⭐⭐⭐⭐ (1-5 stars)
-        
-        **Feedback:**
-        - [Brief explanation in Bahasa Indonesia about accuracy and naturalness]
-        
-        **More Natural Alternative:**
-        "[Provide a more natural Indonesian version]"
-        
-        **💡 Tips:**
-        - [Specific suggestion about conversational Indonesian, informal vs formal register, common expressions]
+        **Feedback:** [Brief comment in Bahasa Indonesia]
+        **Casual Alternative:** "[More casual/natural version if needed]"
         
         ---
         
-        At the end, provide:
+        ### Line 1 - [Role]
+        **English:** [original line]
+        **Your Translation:** [student's answer]
+        **Accuracy:** ✓ Benar / ⚠️ Kurang Tepat / ✗ Salah
+        **Conversational:** ⭐⭐⭐⭐⭐ (1-5 stars, how casual/natural it sounds)
         
-        ## Overall Conversation Review
-        **Strengths:**
-        - [What the student did well]
+        **Feedback:**
+        - [Is it too formal? Too stiff? Or naturally casual?]
         
-        **Areas to Improve:**
-        - [Specific patterns or issues to work on]
+        **Casual Alternative:**
+        "[Provide more casual/natural workplace conversation version]"
         
-        **Conversational Tips:**
-        - [Tips for translating conversations more naturally]
-        - [Common conversational expressions in Indonesian]
+        **💡 Casual Tips:**
+        - [How to make it sound more like real casual workplace chat]
+        - [Common casual expressions used in Indonesian tech workplace]
         
-        Use Bahasa Indonesia for explanations, but keep English examples in English.
-        Be encouraging and focus on helping the student understand conversational nuances.
+        ---
+        
+        **Summary:** [2-3 sentences: overall conversational tone score, formality issue if any, tip for casual workplace Indonesian]
+        
+        Use Bahasa Indonesia. Focus on helping student sound natural in casual workplace conversations, not overly formal.
         """
 
         try:
@@ -293,21 +314,11 @@ class AIService:
         
         ---
         
-        ## Overall Grammar Review
+        ---
         
-        **Strengths:**
-        - What the student did well with tenses and structure
+        **Summary:** [2-3 sentences: overall tense accuracy, main grammar issue, one tip]
         
-        **Common Mistakes:**
-        - Patterns of errors to watch out for
-        
-        **Grammar Tips:**
-        - **Simple Present:** Use for habits, facts, routines (I work, She codes, They meet)
-        - **Simple Past:** Use for completed actions (worked, coded, met)
-        - **Simple Future:** Use will/going to for plans (will work, is going to code)
-        
-        Use Bahasa Indonesia for explanations, but keep English examples in English.
-        Be encouraging and focus on helping the student master basic tenses.
+        Use Bahasa Indonesia. Be direct and concise. NO lengthy intro or closing.
         """
 
         try:
