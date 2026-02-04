@@ -1,10 +1,12 @@
 from .config import settings
+from .user_profile import UserProfileManager
 from google import genai
 
 
 class AIService:
     def __init__(self):
         self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        self.profile_manager = UserProfileManager()
 
     def generate_daily_task(self) -> str:
         """
@@ -12,12 +14,19 @@ class AIService:
         AI otomatis memilih 5 kata.
         Level Translation: B1 (Intermediate).
         """
-        prompt = """
+        # Get user context for personalized tasks
+        user_context = self.profile_manager.get_user_context_for_ai()
+        
+        prompt = f"""
         You are an expert English Tutor for a Senior Backend Engineer.
+        
+        **User Context:**
+        {user_context}
         
         **Task:**
         1. Randomly select **5 high-value English vocabulary words** (verbs, adjectives, or nouns) suitable for a **General Professional Tech environment**.
         2. Create a daily learning challenge based on these 5 selected words.
+        3. If user has specific weaknesses, incorporate vocabulary that helps address those areas.
 
         # Context Setting
         The user is a Software Engineer. The context is **General Professional English**.
@@ -74,33 +83,23 @@ class AIService:
         Leave blank lines after each dialogue line for the student to write the Indonesian translation.
         
         ## 4. Grammar and Structure Challenge
-        Create 3 workplace scenarios, one for each tense:
+        Provide 3 different words (verb, noun, adjective, or adverb) for sentence construction practice.
+        Each word should be used with a specific tense in a workplace context.
         
-        **Scenario 1: Simple Present**
-        Describe a daily routine or regular work activity.
-        Provide 3 prompts for the student to write sentences using Simple Present.
-        Example prompts:
-        - (Your team / meet / every Monday)
-        - (The system / process / data automatically)
-        - (I / review / code before deployment)
+        Format:
+        **1. Simple Present:** [word] (e.g., "deploy", "efficient", "regularly")
+        Challenge: Write a sentence using this word in Simple Present tense about your work routine.
         
-        **Scenario 2: Simple Past**
-        Describe a completed project or past event.
-        Provide 3 prompts for the student to write sentences using Simple Past.
-        Example prompts:
-        - (We / launch / the new feature yesterday)
-        - (The bug / cause / system downtime last week)
-        - (She / present / the results to stakeholders)
         
-        **Scenario 3: Simple Future**
-        Describe upcoming plans or predictions.
-        Provide 3 prompts for the student to write sentences using Simple Future (will/going to).
-        Example prompts:
-        - (The team / deploy / the update next week)
-        - (I / attend / the conference in March)
-        - (We / migrate / to the new server soon)
+        **2. Simple Past:** [different word] (e.g., "implement", "successful", "yesterday")
+        Challenge: Write a sentence using this word in Simple Past tense about a completed task.
         
-        Format: List each prompt with a blank line below for the answer.
+        
+        **3. Simple Future:** [different word] (e.g., "optimize", "performance", "soon")
+        Challenge: Write a sentence using this word in Simple Future tense (will/going to) about upcoming work.
+        
+        
+        Make sure each word is different and relevant to tech workplace context.
         
         ## 5. Daily Tip
         Provide one practical tip for improving English communication skills in a professional tech environment.
@@ -291,22 +290,27 @@ class AIService:
         **Your task:**
         Review each sentence for:
         1. **Correct Tense Usage** - Is the appropriate tense used (Simple Present/Past/Future)?
-        2. **Grammar Accuracy** - Subject-verb agreement, word order, auxiliary verbs
-        3. **Sentence Structure** - Is the sentence well-formed and natural?
+        2. **Word Usage** - Is the given word used correctly in the sentence?
+        3. **Grammar Accuracy** - Subject-verb agreement, word order, auxiliary verbs
+        4. **Naturalness** - Does it sound natural in workplace context?
         
         **Output format:**
         
-        ### Scenario 1: Simple Present
+        ### 1. Simple Present
+        **Given Word:** [the word provided]
+        **Your Sentence:** [student's sentence]
+        **Tense:** ✓ Correct / ✗ Incorrect
+        **Word Usage:** ✓ Correct / ✗ Incorrect
+        **Grammar:** ✓ Correct / ⚠️ Minor Issues / ✗ Major Issues
+        **Naturalness:** ⭐⭐⭐⭐⭐ (1-5 stars)
         
-        **Sentence 1:**
-        **Your Answer:** [student's sentence]
-        **Grammar Check:** ✓ Correct / ✗ Incorrect
         **Feedback:** [Brief explanation in Bahasa Indonesia]
-        **Correct Version:** "[If needed, provide corrected sentence]"
+        **Better Version:** "[If needed, provide improved sentence]"
         
-        (Repeat for sentences 2-3)
+        ### 2. Simple Past
+        (Same format)
         
-        ### Scenario 2: Simple Past
+        ### 3. Simple Future
         (Same format)
         
         ### Scenario 3: Simple Future
@@ -328,3 +332,6 @@ class AIService:
             return response.text
         except Exception as e:
             return f"Error reviewing task: {str(e)}"
+    def update_user_profile_after_review(self, review_content: str, task_type: str, date: str) -> None:
+        """Update user profile with weaknesses found in review."""
+        self.profile_manager.update_weaknesses(review_content, task_type, date)

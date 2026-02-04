@@ -197,15 +197,86 @@ def review(
             )
             f.write(review_result)
 
+        # Update user profile with weaknesses
+        service.update_user_profile_after_review(review_result, f"task_{task_number}", task_date)
+
         typer.secho(
             f"\n✅ Review completed and appended to {task_file}",
             fg=typer.colors.GREEN,
             bold=True,
         )
+        
+        # Show weakness summary
+        _show_weakness_summary(service)
 
     except Exception as e:
         typer.secho(f"\n💥 Error: {str(e)}", fg=typer.colors.RED)
         raise typer.Exit(code=1)
+
+
+@app.command("profile")
+def show_profile():
+    """
+    Show your learning profile and weaknesses summary.
+    
+    Usage: uv run lingokeun profile
+    """
+    from .ai_service import AIService
+    
+    service = AIService()
+    profile = service.profile_manager.load_profile()
+    
+    typer.secho("="*50, fg=typer.colors.BLUE)
+    typer.secho("📊 YOUR LEARNING PROFILE", fg=typer.colors.BLUE, bold=True)
+    typer.secho("="*50, fg=typer.colors.BLUE)
+    
+    typer.secho(f"\n📈 Total Reviews: {profile['total_reviews']}", fg=typer.colors.WHITE)
+    
+    # Focus Areas
+    if profile['focus_areas']['urgent']:
+        typer.secho("\n🔴 URGENT - Need immediate attention:", fg=typer.colors.RED, bold=True)
+        for area in profile['focus_areas']['urgent']:
+            typer.echo(f"   • {area}")
+    
+    if profile['focus_areas']['practice']:
+        typer.secho("\n🟡 PRACTICE - Keep working on:", fg=typer.colors.YELLOW, bold=True)
+        for area in profile['focus_areas']['practice']:
+            typer.echo(f"   • {area}")
+    
+    if profile['focus_areas']['maintain']:
+        typer.secho("\n🟢 MAINTAIN - Doing well:", fg=typer.colors.GREEN, bold=True)
+        for area in profile['focus_areas']['maintain']:
+            typer.echo(f"   • {area}")
+    
+    # Patterns
+    if profile['patterns']['persistent_issues']:
+        typer.secho("\n⚠️  Persistent Issues (3+ mistakes):", fg=typer.colors.MAGENTA)
+        for issue in profile['patterns']['persistent_issues']:
+            typer.echo(f"   • {issue}")
+    
+    if profile['patterns']['improving_areas']:
+        typer.secho("\n✨ Improving Areas:", fg=typer.colors.CYAN)
+        for area in profile['patterns']['improving_areas']:
+            typer.echo(f"   • {area}")
+    
+    # Vocabulary Gaps
+    if profile['vocabulary_gaps']:
+        typer.secho("\n📚 Vocabulary Gaps:", fg=typer.colors.YELLOW)
+        for vocab in profile['vocabulary_gaps'][:5]:
+            typer.echo(f"   • {vocab['word']} (missed {vocab['missed_count']}x)")
+    
+    typer.echo()
+
+
+def _show_weakness_summary(service):
+    """Show brief weakness summary after review."""
+    profile = service.profile_manager.load_profile()
+    
+    if profile['focus_areas']['urgent']:
+        typer.secho("\n⚠️  Focus on: " + ", ".join(profile['focus_areas']['urgent'][:2]), fg=typer.colors.YELLOW)
+    
+    if profile['patterns']['new_issues']:
+        typer.secho(f"🆕 New issues detected: {', '.join(profile['patterns']['new_issues'][:2])}", fg=typer.colors.CYAN)
 
 
 if __name__ == "__main__":
