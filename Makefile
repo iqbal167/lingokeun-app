@@ -1,10 +1,12 @@
-.PHONY: help generate review profile lint fix format check
+.PHONY: help generate review profile material lint fix format check
 
 help:
 	@echo "Available commands:"
 	@echo "  make generate       - Generate daily task"
 	@echo "  make review DATE=YYYY-MM-DD TASK=1  - Review task (default: TASK=1)"
 	@echo "  make profile        - Show your learning profile and weaknesses"
+	@echo "  make material       - List suggested learning materials"
+	@echo "  make material TOPIC=\"Topic Name\"  - Generate specific material"
 	@echo "  make lint           - Check code with ruff"
 	@echo "  make fix            - Auto-fix linting issues"
 	@echo "  make format         - Format code with ruff"
@@ -22,6 +24,13 @@ review:
 
 profile:
 	uv run lingokeun profile
+
+material:
+	@if [ -z "$(TOPIC)" ]; then \
+		uv run lingokeun material --list; \
+	else \
+		uv run lingokeun material --topic "$(TOPIC)"; \
+	fi
 
 lint:
 	uv run ruff check .

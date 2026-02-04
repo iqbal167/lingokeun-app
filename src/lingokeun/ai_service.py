@@ -16,7 +16,7 @@ class AIService:
         """
         # Get user context for personalized tasks
         user_context = self.profile_manager.get_user_context_for_ai()
-        
+
         prompt = f"""
         You are an expert English Tutor for a Senior Backend Engineer.
         
@@ -332,6 +332,101 @@ class AIService:
             return response.text
         except Exception as e:
             return f"Error reviewing task: {str(e)}"
-    def update_user_profile_after_review(self, review_content: str, task_type: str, date: str) -> None:
+
+    def update_user_profile_after_review(
+        self, review_content: str, task_type: str, date: str
+    ) -> None:
         """Update user profile with weaknesses found in review."""
         self.profile_manager.update_weaknesses(review_content, task_type, date)
+
+    def generate_learning_material(self, topic: str) -> str:
+        """Generate B1 intermediate learning material for specific topic."""
+        prompt = f"""
+        You are an expert English Tutor creating B1 (Intermediate) level learning materials for software engineers.
+        
+        **Topic:** {topic}
+        
+        **Your task:**
+        Create comprehensive learning material in Markdown format with this structure:
+        
+        # {topic}
+        
+        ## Overview
+        [Brief explanation of the topic - 2-3 sentences]
+        
+        ## Key Concepts
+        [List 3-5 main concepts with brief explanations]
+        
+        ## Common Patterns in Tech Workplace
+        [Show 5-7 examples relevant to software engineering context]
+        Example format:
+        - **Pattern:** [English example]
+          **Usage:** [When to use it]
+          **Indonesian:** [Translation]
+        
+        ## Practice Exercises
+        [Provide 5 practice sentences/scenarios]
+        Format: Leave blank lines for answers
+        
+        ## Common Mistakes to Avoid
+        [List 3-4 common mistakes with corrections]
+        ❌ Wrong: [example]
+        ✅ Correct: [example]
+        
+        ## Quick Reference
+        [Summary table or bullet points for quick review]
+        
+        Keep language at B1 level - not too simple, not too complex.
+        Focus on practical workplace communication.
+        Use Bahasa Indonesia for explanations when helpful.
+        """
+
+        try:
+            response = self.client.models.generate_content(
+                model="gemini-3-flash-preview", contents=prompt
+            )
+            return response.text
+        except Exception as e:
+            return f"Error generating material: {str(e)}"
+
+    def suggest_material_topics(self) -> list[str]:
+        """Suggest material topics based on user weaknesses."""
+        profile = self.profile_manager.load_profile()
+
+        topics = []
+
+        # Grammar-based topics
+        grammar_topics = {
+            "articles": "Articles (A, An, The) in English",
+            "tenses": "Simple Tenses (Present, Past, Future)",
+            "prepositions": "Common Prepositions in Tech Context",
+            "subject_verb": "Subject-Verb Agreement",
+            "comma_splice": "Sentence Structure and Punctuation",
+        }
+
+        for issue in profile.get("focus_areas", {}).get("urgent", []):
+            if issue in grammar_topics:
+                topics.append(grammar_topics[issue])
+
+        # Translation-based topics
+        translation_topics = {
+            "incomplete_translation": "Complete Translation Techniques",
+            "time_expressions": "Time Expressions in English",
+            "formal_informal": "Formal vs Informal English",
+        }
+
+        for issue in profile.get("focus_areas", {}).get("practice", []):
+            if issue in translation_topics:
+                topics.append(translation_topics[issue])
+
+        # Default B1 topics if no weaknesses
+        if not topics:
+            topics = [
+                "Phrasal Verbs for Software Engineers",
+                "Email Writing in Professional Context",
+                "Meeting Phrases and Expressions",
+                "Code Review Communication",
+                "Technical Documentation Writing",
+            ]
+
+        return topics[:5]  # Return top 5 suggestions

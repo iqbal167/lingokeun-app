@@ -198,14 +198,16 @@ def review(
             f.write(review_result)
 
         # Update user profile with weaknesses
-        service.update_user_profile_after_review(review_result, f"task_{task_number}", task_date)
+        service.update_user_profile_after_review(
+            review_result, f"task_{task_number}", task_date
+        )
 
         typer.secho(
             f"\n✅ Review completed and appended to {task_file}",
             fg=typer.colors.GREEN,
             bold=True,
         )
-        
+
         # Show weakness summary
         _show_weakness_summary(service)
 
@@ -218,65 +220,187 @@ def review(
 def show_profile():
     """
     Show your learning profile and weaknesses summary.
-    
+
     Usage: uv run lingokeun profile
     """
     from .ai_service import AIService
-    
+
     service = AIService()
     profile = service.profile_manager.load_profile()
-    
-    typer.secho("="*50, fg=typer.colors.BLUE)
+
+    typer.secho("=" * 50, fg=typer.colors.BLUE)
     typer.secho("📊 YOUR LEARNING PROFILE", fg=typer.colors.BLUE, bold=True)
-    typer.secho("="*50, fg=typer.colors.BLUE)
-    
-    typer.secho(f"\n📈 Total Reviews: {profile['total_reviews']}", fg=typer.colors.WHITE)
-    
+    typer.secho("=" * 50, fg=typer.colors.BLUE)
+
+    typer.secho(
+        f"\n📈 Total Reviews: {profile['total_reviews']}", fg=typer.colors.WHITE
+    )
+
     # Focus Areas
-    if profile['focus_areas']['urgent']:
-        typer.secho("\n🔴 URGENT - Need immediate attention:", fg=typer.colors.RED, bold=True)
-        for area in profile['focus_areas']['urgent']:
+    if profile["focus_areas"]["urgent"]:
+        typer.secho(
+            "\n🔴 URGENT - Need immediate attention:", fg=typer.colors.RED, bold=True
+        )
+        for area in profile["focus_areas"]["urgent"]:
             typer.echo(f"   • {area}")
-    
-    if profile['focus_areas']['practice']:
-        typer.secho("\n🟡 PRACTICE - Keep working on:", fg=typer.colors.YELLOW, bold=True)
-        for area in profile['focus_areas']['practice']:
+
+    if profile["focus_areas"]["practice"]:
+        typer.secho(
+            "\n🟡 PRACTICE - Keep working on:", fg=typer.colors.YELLOW, bold=True
+        )
+        for area in profile["focus_areas"]["practice"]:
             typer.echo(f"   • {area}")
-    
-    if profile['focus_areas']['maintain']:
+
+    if profile["focus_areas"]["maintain"]:
         typer.secho("\n🟢 MAINTAIN - Doing well:", fg=typer.colors.GREEN, bold=True)
-        for area in profile['focus_areas']['maintain']:
+        for area in profile["focus_areas"]["maintain"]:
             typer.echo(f"   • {area}")
-    
+
     # Patterns
-    if profile['patterns']['persistent_issues']:
+    if profile["patterns"]["persistent_issues"]:
         typer.secho("\n⚠️  Persistent Issues (3+ mistakes):", fg=typer.colors.MAGENTA)
-        for issue in profile['patterns']['persistent_issues']:
+        for issue in profile["patterns"]["persistent_issues"]:
             typer.echo(f"   • {issue}")
-    
-    if profile['patterns']['improving_areas']:
+
+    if profile["patterns"]["improving_areas"]:
         typer.secho("\n✨ Improving Areas:", fg=typer.colors.CYAN)
-        for area in profile['patterns']['improving_areas']:
+        for area in profile["patterns"]["improving_areas"]:
             typer.echo(f"   • {area}")
-    
+
     # Vocabulary Gaps
-    if profile['vocabulary_gaps']:
+    if profile["vocabulary_gaps"]:
         typer.secho("\n📚 Vocabulary Gaps:", fg=typer.colors.YELLOW)
-        for vocab in profile['vocabulary_gaps'][:5]:
+        for vocab in profile["vocabulary_gaps"][:5]:
             typer.echo(f"   • {vocab['word']} (missed {vocab['missed_count']}x)")
-    
+
     typer.echo()
 
 
 def _show_weakness_summary(service):
     """Show brief weakness summary after review."""
     profile = service.profile_manager.load_profile()
-    
-    if profile['focus_areas']['urgent']:
-        typer.secho("\n⚠️  Focus on: " + ", ".join(profile['focus_areas']['urgent'][:2]), fg=typer.colors.YELLOW)
-    
-    if profile['patterns']['new_issues']:
-        typer.secho(f"🆕 New issues detected: {', '.join(profile['patterns']['new_issues'][:2])}", fg=typer.colors.CYAN)
+
+    if profile["focus_areas"]["urgent"]:
+        typer.secho(
+            "\n⚠️  Focus on: " + ", ".join(profile["focus_areas"]["urgent"][:2]),
+            fg=typer.colors.YELLOW,
+        )
+
+    if profile["patterns"]["new_issues"]:
+        typer.secho(
+            f"🆕 New issues detected: {', '.join(profile['patterns']['new_issues'][:2])}",
+            fg=typer.colors.CYAN,
+        )
+
+
+@app.command("material")
+def generate_material(
+    topic: str = typer.Option(
+        None, "--topic", "-t", help="Specific topic to generate material for"
+    ),
+    list_suggestions: bool = typer.Option(
+        False, "--list", "-l", help="List suggested topics based on your weaknesses"
+    ),
+):
+    """
+    Generate B1 level learning material on specific topics.
+    Materials are saved in material/ folder.
+
+    Usage:
+    - uv run lingokeun material --list (show suggestions)
+    - uv run lingokeun material --topic "Phrasal Verbs"
+    """
+    from .ai_service import AIService
+    import re
+
+    service = AIService()
+    material_dir = Path("material")
+    material_dir.mkdir(exist_ok=True)
+
+    # List existing materials
+    existing_materials = [f.stem for f in material_dir.glob("*.md")]
+
+    # Show suggestions
+    if list_suggestions or not topic:
+        typer.secho("=" * 50, fg=typer.colors.BLUE)
+        typer.secho("📚 SUGGESTED LEARNING MATERIALS", fg=typer.colors.BLUE, bold=True)
+        typer.secho("=" * 50, fg=typer.colors.BLUE)
+
+        suggestions = service.suggest_material_topics()
+
+        typer.secho("\n💡 Based on your weaknesses:", fg=typer.colors.YELLOW)
+        for i, suggested_topic in enumerate(suggestions, 1):
+            # Check if already exists
+            filename = (
+                re.sub(r"[^\w\s-]", "", suggested_topic)
+                .strip()
+                .replace(" ", "_")
+                .lower()
+            )
+            status = "✓ Generated" if filename in existing_materials else "○ Not yet"
+            typer.echo(f"   {i}. {suggested_topic} [{status}]")
+
+        if existing_materials:
+            typer.secho(
+                f"\n📖 Existing materials ({len(existing_materials)}):",
+                fg=typer.colors.GREEN,
+            )
+            for mat in existing_materials[:10]:
+                typer.echo(f"   • {mat.replace('_', ' ').title()}")
+
+        if not topic:
+            typer.echo('\nUse: uv run lingokeun material --topic "Topic Name"')
+            return
+
+    # Generate material
+    typer.secho("=" * 50, fg=typer.colors.BLUE)
+    typer.secho("📝 GENERATING MATERIAL", fg=typer.colors.BLUE, bold=True)
+    typer.secho(f"Topic: {topic}", fg=typer.colors.WHITE)
+    typer.secho("=" * 50, fg=typer.colors.BLUE)
+
+    # Create filename
+    filename = re.sub(r"[^\w\s-]", "", topic).strip().replace(" ", "_").lower()
+    filepath = material_dir / f"{filename}.md"
+
+    # Check if already exists
+    if filepath.exists():
+        overwrite = typer.confirm(f"\n⚠️  Material '{topic}' already exists. Overwrite?")
+        if not overwrite:
+            typer.secho("❌ Cancelled", fg=typer.colors.RED)
+            raise typer.Exit(code=0)
+
+    try:
+        typer.secho("\n🤖 Generating material with AI...", fg=typer.colors.YELLOW)
+
+        # Start spinner
+        stop_spinner = threading.Event()
+        spinner_thread = threading.Thread(
+            target=show_spinner, args=(stop_spinner, "Generating material")
+        )
+        spinner_thread.start()
+
+        material_content = service.generate_learning_material(topic)
+
+        # Stop spinner
+        stop_spinner.set()
+        spinner_thread.join()
+
+        if material_content.startswith("Error"):
+            typer.secho(f"\n💥 Failed: {material_content}", fg=typer.colors.RED)
+            raise typer.Exit(code=1)
+
+        # Save material
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write(material_content)
+
+        typer.secho(
+            f"\n✅ Material saved: {filepath}", fg=typer.colors.GREEN, bold=True
+        )
+        typer.echo("   Open and study this material to improve your B1 level skills!")
+
+    except Exception as e:
+        typer.secho(f"\n💥 Error: {str(e)}", fg=typer.colors.RED)
+        raise typer.Exit(code=1)
 
 
 if __name__ == "__main__":
