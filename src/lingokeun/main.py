@@ -328,17 +328,25 @@ def generate_material(
 
         suggestions = service.suggest_material_topics()
 
-        typer.secho("\n💡 Based on your weaknesses:", fg=typer.colors.YELLOW)
-        for i, suggested_topic in enumerate(suggestions, 1):
-            # Check if already exists
-            filename = (
-                re.sub(r"[^\w\s-]", "", suggested_topic)
-                .strip()
-                .replace(" ", "_")
-                .lower()
+        if suggestions:
+            typer.secho("\n💡 Based on your weaknesses:", fg=typer.colors.YELLOW)
+            for i, suggested_topic in enumerate(suggestions, 1):
+                # Check if already exists
+                filename = (
+                    re.sub(r"[^\w\s-]", "", suggested_topic)
+                    .strip()
+                    .replace(" ", "_")
+                    .lower()
+                )
+                status = (
+                    "✓ Generated" if filename in existing_materials else "○ Not yet"
+                )
+                typer.echo(f"   {i}. {suggested_topic} [{status}]")
+        else:
+            typer.secho("\n💡 No weaknesses detected yet.", fg=typer.colors.GREEN)
+            typer.echo(
+                "   Complete some reviews first to get personalized material suggestions!"
             )
-            status = "✓ Generated" if filename in existing_materials else "○ Not yet"
-            typer.echo(f"   {i}. {suggested_topic} [{status}]")
 
         if existing_materials:
             typer.secho(

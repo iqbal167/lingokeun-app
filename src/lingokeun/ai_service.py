@@ -103,7 +103,15 @@ class AIService:
         
         ## 5. Daily Tip
         Provide one practical tip for improving English communication skills in a professional tech environment.
-        Keep it short, actionable, and relevant to the selected vocabulary.
+        
+        **Focus areas for tips (rotate between these):**
+        - Casual conversational responses (Sure, That sounds good, Exactly, Got it, Makes sense, Fair enough, I see what you mean, etc.)
+        - Natural workplace reactions (Oh I see, Right, Gotcha, Yep, Absolutely, For sure, etc.)
+        - Phrasal verbs in casual context
+        - Informal vs formal register
+        - Common workplace expressions
+        
+        Keep it short, actionable, and include 3-5 example phrases.
         
         **Do NOT provide the answer key yet.**
         """
@@ -395,38 +403,34 @@ class AIService:
 
         topics = []
 
-        # Grammar-based topics
-        grammar_topics = {
-            "articles": "Articles (A, An, The) in English",
-            "tenses": "Simple Tenses (Present, Past, Future)",
-            "prepositions": "Common Prepositions in Tech Context",
-            "subject_verb": "Subject-Verb Agreement",
-            "comma_splice": "Sentence Structure and Punctuation",
-        }
+        # Get all grammar weaknesses from profile (sorted by total_mistakes)
+        grammar_weaknesses = profile.get("grammar_weaknesses", {})
+        sorted_grammar = sorted(
+            grammar_weaknesses.items(),
+            key=lambda x: x[1].get("total_mistakes", 0),
+            reverse=True,
+        )
 
-        for issue in profile.get("focus_areas", {}).get("urgent", []):
-            if issue in grammar_topics:
-                topics.append(grammar_topics[issue])
+        for weakness_key, data in sorted_grammar[:3]:  # Top 3
+            topic_name = weakness_key.replace("_", " ").title()
+            topics.append(f"{topic_name} in English")
 
-        # Translation-based topics
-        translation_topics = {
-            "incomplete_translation": "Complete Translation Techniques",
-            "time_expressions": "Time Expressions in English",
-            "formal_informal": "Formal vs Informal English",
-        }
+        # Get all translation weaknesses from profile (sorted by total_mistakes)
+        translation_weaknesses = profile.get("translation_weaknesses", {})
+        sorted_translation = sorted(
+            translation_weaknesses.items(),
+            key=lambda x: x[1].get("total_mistakes", 0),
+            reverse=True,
+        )
 
-        for issue in profile.get("focus_areas", {}).get("practice", []):
-            if issue in translation_topics:
-                topics.append(translation_topics[issue])
+        for weakness_key, data in sorted_translation[:2]:  # Top 2
+            topic_name = weakness_key.replace("_", " ").title()
+            topics.append(f"{topic_name} for Tech Workplace")
 
-        # Default B1 topics if no weaknesses
-        if not topics:
-            topics = [
-                "Phrasal Verbs for Software Engineers",
-                "Email Writing in Professional Context",
-                "Meeting Phrases and Expressions",
-                "Code Review Communication",
-                "Technical Documentation Writing",
-            ]
+        # Add vocabulary gap topics
+        vocab_gaps = profile.get("vocabulary_gaps", [])
+        if vocab_gaps:
+            vocab_words = [v["word"] for v in vocab_gaps[:3]]
+            topics.append(f"Essential Vocabulary: {', '.join(vocab_words)}")
 
         return topics[:5]  # Return top 5 suggestions
