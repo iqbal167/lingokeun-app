@@ -16,6 +16,7 @@ class AIService:
         """
         # Get user context for personalized tasks
         user_context = self.profile_manager.get_user_context_for_ai()
+        vocab_context = self.profile_manager.get_vocabulary_context_for_ai()
 
         prompt = f"""
         You are an expert English Tutor for a Senior Backend Engineer.
@@ -23,10 +24,16 @@ class AIService:
         **User Context:**
         {user_context}
         
+        **Vocabulary Selection Rules:**
+        - AVOID these mastered words (80%+ accuracy): {", ".join(vocab_context["mastered"][:20]) if vocab_context["mastered"] else "None yet"}
+        - PRIORITIZE reviewing these weak words (<80%): {", ".join(vocab_context["weak"][:10]) if vocab_context["weak"] else "None"}
+        - CONSIDER these unreviewed words (from user's reading): {", ".join(vocab_context["unreviewed"][:10]) if vocab_context["unreviewed"] else "None"}
+        - Select 5 words total: prioritize weak words, then unreviewed words, then new words
+        
         **Task:**
-        1. Randomly select **5 high-value English vocabulary words** (verbs, adjectives, or nouns) suitable for a **General Professional Tech environment**.
-        2. Create a daily learning challenge based on these 5 selected words.
-        3. If user has specific weaknesses, incorporate vocabulary that helps address those areas.
+        1. Select **5 vocabulary words** following the rules above
+        2. Create a daily learning challenge based on these 5 selected words
+        3. If user has specific weaknesses, incorporate vocabulary that helps address those areas
 
         # Context Setting
         The user is a Software Engineer. The context is **General Professional English**.
@@ -38,6 +45,20 @@ class AIService:
         **Selected Vocabulary:** [List the 5 words here]
         **Focus:** Clear Professional Communication
         
+        ## 💡 Daily Tip
+        Provide one practical tip for improving English communication skills in a professional tech environment.
+        
+        **Focus areas for tips (rotate between these):**
+        - Casual conversational responses (Sure, That sounds good, Exactly, Got it, Makes sense, Fair enough)
+        - Natural workplace reactions (Oh I see, Right, Gotcha, Yep, Absolutely, For sure)
+        - Phrasal verbs in casual context
+        - Informal vs formal register
+        - Common workplace expressions
+        
+        Keep it SHORT and actionable. Include ONLY 2-3 example phrases (not 5+).
+        
+        **⚠️ Common Mistake:** Add ONE line about a common mistake to avoid (e.g., "Don't say 'I am agree' → Say 'I agree'")
+        
         ## 1. Word Transformation Challenge
         For each selected word, create a fill-in-the-blank list for:
         - Verb:
@@ -48,7 +69,7 @@ class AIService:
         (Leave the answers completely blank after the colon, no underscores).
         
         ## 2. Translation Challenge (B1 Level)
-        Create 6 Indonesian sentences related to daily work life.
+        Create 7 Indonesian sentences related to daily work life.
         Keep the sentence structure simple and direct (Subject-Verb-Object), suitable for Intermediate learners.
         Make the sentences slightly longer and more detailed to increase the challenge.
         
@@ -56,6 +77,7 @@ class AIService:
         - Sentences 1-4: Regular statements (positive sentences)
         - Sentence 5: MUST be a negative sentence (using "tidak", "belum", "bukan", etc.)
         - Sentence 6: MUST be a question sentence (using "apakah", "bagaimana", "kapan", etc.)
+        - Sentence 7: MUST be a passive voice sentence (using "di-" prefix, e.g., "dikerjakan", "diperiksa", "diselesaikan")
         
         Format: List sentences directly without extra blank lines between them.
         Example:
@@ -83,35 +105,32 @@ class AIService:
         Leave blank lines after each dialogue line for the student to write the Indonesian translation.
         
         ## 4. Grammar and Structure Challenge
-        Provide 3 different words (verb, noun, adjective, or adverb) for sentence construction practice.
+        Provide 5 different words (verb, noun, adjective, or adverb) for sentence construction practice.
         Each word should be used with a specific tense in a workplace context.
         
-        Format:
-        **1. Simple Present:** [word] (e.g., "deploy", "efficient", "regularly")
-        Challenge: Write a sentence using this word in Simple Present tense about your work routine.
+        **Challenge:** Write a sentence using the given word in the specified tense.
+        
+        **1. Simple Present:** [word]
         
         
-        **2. Simple Past:** [different word] (e.g., "implement", "successful", "yesterday")
-        Challenge: Write a sentence using this word in Simple Past tense about a completed task.
+        **2. Simple Past:** [word]
         
         
-        **3. Simple Future:** [different word] (e.g., "optimize", "performance", "soon")
-        Challenge: Write a sentence using this word in Simple Future tense (will/going to) about upcoming work.
+        **3. Simple Future:** [word]
+        
+        
+        **4. Present Continuous:** [word]
+        
+        
+        **5. Present Perfect:** [word]
         
         
         Make sure each word is different and relevant to tech workplace context.
         
-        ## 5. Daily Tip
-        Provide one practical tip for improving English communication skills in a professional tech environment.
-        
-        **Focus areas for tips (rotate between these):**
-        - Casual conversational responses (Sure, That sounds good, Exactly, Got it, Makes sense, Fair enough, I see what you mean, etc.)
+        **Do NOT provide the answer key yet.**
         - Natural workplace reactions (Oh I see, Right, Gotcha, Yep, Absolutely, For sure, etc.)
         - Phrasal verbs in casual context
         - Informal vs formal register
-        - Common workplace expressions
-        
-        Keep it short, actionable, and include 3-5 example phrases.
         
         **Do NOT provide the answer key yet.**
         """
@@ -123,6 +142,90 @@ class AIService:
             return response.text
         except Exception as e:
             return f"Error generating task from AI: {str(e)}"
+
+    def extract_vocabulary_mastery_from_review(
+        self, review_content: str, date: str
+    ) -> None:
+        """Extract vocabulary mastery from Task 1 review and update profile."""
+        import re
+
+        # Extract words and their accuracy from review
+        # Pattern: ### Word X: [word]
+        word_pattern = r"### Word \d+: (\w+)"
+        words = re.findall(word_pattern, review_content, re.IGNORECASE)
+
+        for word in words:
+            # Count correct/wrong forms for this word
+            # Look for ✓ Benar and ✗ Salah in the word's section
+            word_section_pattern = f"### Word \\d+: {word}.*?(?=### Word|---|\Z)"
+            word_section = re.search(
+                word_section_pattern, review_content, re.DOTALL | re.IGNORECASE
+            )
+
+            if word_section:
+                section_text = word_section.group(0)
+
+                # Count status markers
+                correct_count = section_text.count("✓")
+
+                total_forms = 5  # verb, noun, adj, adv, opposite
+                forms_correct_count = correct_count
+
+                # Calculate accuracy
+                accuracy = int((forms_correct_count / total_forms) * 100)
+
+                # Determine which forms are correct/weak
+                forms_correct = []
+                forms_weak = []
+
+                if (
+                    "| Verb |" in section_text
+                    and "✓" in section_text.split("| Verb |")[1].split("\n")[0]
+                ):
+                    forms_correct.append("verb")
+                else:
+                    forms_weak.append("verb")
+
+                if (
+                    "| Noun |" in section_text
+                    and "✓" in section_text.split("| Noun |")[1].split("\n")[0]
+                ):
+                    forms_correct.append("noun")
+                else:
+                    forms_weak.append("noun")
+
+                if (
+                    "| Adjective |" in section_text
+                    and "✓" in section_text.split("| Adjective |")[1].split("\n")[0]
+                ):
+                    forms_correct.append("adjective")
+                else:
+                    forms_weak.append("adjective")
+
+                if (
+                    "| Adverb |" in section_text
+                    and "✓" in section_text.split("| Adverb |")[1].split("\n")[0]
+                ):
+                    forms_correct.append("adverb")
+                else:
+                    forms_weak.append("adverb")
+
+                if (
+                    "| Opposite |" in section_text
+                    and "✓" in section_text.split("| Opposite |")[1].split("\n")[0]
+                ):
+                    forms_correct.append("opposite")
+                else:
+                    forms_weak.append("opposite")
+
+                # Update profile
+                self.profile_manager.update_vocabulary_mastery(
+                    word=word,
+                    accuracy_score=accuracy,
+                    forms_correct=forms_correct,
+                    forms_weak=forms_weak,
+                    date=date,
+                )
 
     def review_task1(self, user_answers: str) -> str:
         """Review Task 1 (Word Transformation Challenge)."""
@@ -242,6 +345,8 @@ class AIService:
         2. **Conversational Tone** - Does it sound like natural, casual workplace chat in Indonesian?
         3. **Register** - Is it appropriately informal (not too formal/stiff)?
         
+        **CRITICAL: NO greeting or intro paragraphs. Start directly with scenario review.**
+        
         **Output format:**
         
         ### Scenario
@@ -297,7 +402,7 @@ class AIService:
         
         **Your task:**
         Review each sentence for:
-        1. **Correct Tense Usage** - Is the appropriate tense used (Simple Present/Past/Future)?
+        1. **Correct Tense Usage** - Is the appropriate tense used?
         2. **Word Usage** - Is the given word used correctly in the sentence?
         3. **Grammar Accuracy** - Subject-verb agreement, word order, auxiliary verbs
         4. **Naturalness** - Does it sound natural in workplace context?
@@ -321,7 +426,10 @@ class AIService:
         ### 3. Simple Future
         (Same format)
         
-        ### Scenario 3: Simple Future
+        ### 4. Present Continuous
+        (Same format)
+        
+        ### 5. Present Perfect
         (Same format)
         
         ---

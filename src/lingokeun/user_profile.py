@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Any
+from .vocabulary_db import VocabularyDatabase
 
 
 class UserProfileManager:
@@ -9,6 +10,7 @@ class UserProfileManager:
         self.profile_dir = Path("profile")
         self.profile_file = self.profile_dir / "user_profile.json"
         self.profile_dir.mkdir(exist_ok=True)
+        self.vocab_db = VocabularyDatabase()
 
     def load_profile(self) -> Dict[str, Any]:
         """Load user profile or create default if not exists."""
@@ -34,6 +36,7 @@ class UserProfileManager:
             "grammar_weaknesses": {},
             "translation_weaknesses": {},
             "vocabulary_gaps": [],
+            "vocabulary_mastery": {},
             "patterns": {
                 "persistent_issues": [],
                 "improving_areas": [],
@@ -272,3 +275,32 @@ class UserProfileManager:
             if context_parts
             else "User showing good progress overall."
         )
+
+    def update_vocabulary_mastery(
+        self,
+        word: str,
+        accuracy_score: int,
+        forms_correct: list[str],
+        forms_weak: list[str],
+        date: str,
+    ) -> None:
+        """Update vocabulary mastery tracking using SQLite."""
+        self.vocab_db.update_vocabulary_mastery(
+            word=word,
+            accuracy_score=accuracy_score,
+            forms_correct=forms_correct,
+            forms_weak=forms_weak,
+            date=date,
+        )
+
+    def get_vocabulary_context_for_ai(self) -> dict:
+        """Get mastered and weak vocabulary for AI prompt."""
+        mastered_words = self.vocab_db.get_mastered_words(threshold=80)
+        weak_words = self.vocab_db.get_weak_words(threshold=80)
+        unreviewed_words = self.vocab_db.get_unreviewed_words(limit=10)
+
+        return {
+            "mastered": mastered_words,
+            "weak": weak_words,
+            "unreviewed": unreviewed_words,
+        }

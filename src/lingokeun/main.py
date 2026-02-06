@@ -147,6 +147,10 @@ def review(
             review_result = service.review_task1(user_input)
             stop_spinner.set()
             spinner_thread.join()
+
+            # Extract vocabulary mastery from review
+            service.extract_vocabulary_mastery_from_review(review_result, task_date)
+
         elif task_number == 2:
             typer.secho(
                 "\n🤖 Reviewing Translation Challenge...", fg=typer.colors.YELLOW
@@ -409,6 +413,112 @@ def generate_material(
     except Exception as e:
         typer.secho(f"\n💥 Error: {str(e)}", fg=typer.colors.RED)
         raise typer.Exit(code=1)
+
+
+@app.command("vocab")
+def manage_vocabulary(
+    add: str = typer.Option(None, "--add", "-a", help="Add new vocabulary word"),
+    word_type: str = typer.Option(None, "--type", "-y", help="Word type (n/v/adj/adv)"),
+    meaning: str = typer.Option(None, "--meaning", "-m", help="Meaning of the word"),
+    stats: bool = typer.Option(
+        False, "--stats", "-s", help="Show vocabulary statistics"
+    ),
+    word: str = typer.Option(
+        None, "--word", "-w", help="Show details of specific word"
+    ),
+):
+    """
+    Manage vocabulary database.
+
+    Usage:
+    - uv run lingokeun vocab --add prominently --type adv --meaning "secara menonjol"
+    - uv run lingokeun vocab --stats
+    - uv run lingokeun vocab --word facilitate
+    """
+    from .ai_service import AIService
+
+    service = AIService()
+    vocab_db = service.profile_manager.vocab_db
+
+    # Add new vocabulary
+    if add:
+        vocab_db.add_vocabulary(
+            word=add, word_type=word_type, meaning=meaning, source="manual"
+        )
+        typer.secho(f"\n✅ Added vocabulary: {add}", fg=typer.colors.GREEN, bold=True)
+        if word_type:
+            typer.echo(f"   Type: {word_type}")
+        if meaning:
+            typer.echo(f"   Meaning: {meaning}")
+        typer.echo("   This word will be included in future tasks!")
+        return
+
+    # Show statistics
+    if stats:
+        stats_data = vocab_db.get_vocabulary_stats()
+
+        typer.secho("=" * 50, fg=typer.colors.BLUE)
+        typer.secho("📊 VOCABULARY STATISTICS", fg=typer.colors.BLUE, bold=True)
+        typer.secho("=" * 50, fg=typer.colors.BLUE)
+
+        typer.echo(f"\n📚 Total Vocabulary: {stats_data['total']}")
+        typer.secho(
+            f"✅ Mastered (80%+): {stats_data['mastered']}", fg=typer.colors.GREEN
+        )
+        typer.secho(f"⚠️  Weak (<80%): {stats_data['weak']}", fg=typer.colors.YELLOW)
+        typer.secho(f"🆕 Unreviewed: {stats_data['unreviewed']}", fg=typer.colors.CYAN)
+
+        # Show progress
+        if stats_data["total"] > 0:
+            mastery_rate = int((stats_data["mastered"] / stats_data["total"]) * 100)
+            typer.echo(f"\n📈 Mastery Rate: {mastery_rate}%")
+            typer.echo(f"🎯 Target: 5000 vocabulary ({stats_data['total']}/5000)")
+
+        typer.echo()
+        return
+
+    # Show word details
+    if word:
+        details = vocab_db.get_word_details(word)
+
+        if not details:
+            typer.secho(f"❌ Word '{word}' not found in database", fg=typer.colors.RED)
+            return
+
+        typer.secho("=" * 50, fg=typer.colors.BLUE)
+        typer.secho(f"📖 {details['word'].upper()}", fg=typer.colors.BLUE, bold=True)
+        typer.secho("=" * 50, fg=typer.colors.BLUE)
+
+        if details["word_type"]:
+            typer.echo(f"\n🏷️  Type: {details['word_type']}")
+
+        if details["meaning"]:
+            typer.echo(f"💡 Meaning: {details['meaning']}")
+
+        typer.echo(f"\n📊 Reviews: {details['total_reviews']}")
+        typer.echo(f"🎯 Accuracy: {details['accuracy_score']}%")
+
+        if details["last_reviewed"]:
+            typer.echo(f"📅 Last Reviewed: {details['last_reviewed']}")
+
+        typer.echo(f"📌 Source: {details['source']}")
+
+        if details["forms"]:
+            typer.echo("\n📝 Forms Mastery:")
+            for form, mastered in details["forms"].items():
+                status = "✅" if mastered else "❌"
+                typer.echo(f"   {status} {form.title()}")
+
+        if details["history"]:
+            typer.echo("\n📈 Review History:")
+            for h in details["history"][:5]:
+                typer.echo(f"   {h['date']}: {h['accuracy']}%")
+
+        typer.echo()
+        return
+
+    # No options provided, show help
+    typer.echo("Use --help to see available options")
 
 
 if __name__ == "__main__":
