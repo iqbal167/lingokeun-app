@@ -150,14 +150,14 @@ class AIService:
         import re
 
         # Extract words and their accuracy from review
-        # Pattern: ### Word X: [word]
-        word_pattern = r"### Word \d+: (\w+)"
-        words = re.findall(word_pattern, review_content, re.IGNORECASE)
+        # Pattern: ### Word X: [word] (type: [n/v/adj/adv])
+        word_pattern = r"### Word \d+: (\w+)(?: \(type: ([nvadj]+)\))?"
+        matches = re.findall(word_pattern, review_content, re.IGNORECASE)
 
-        for word in words:
+        for word, word_type in matches:
             # Count correct/wrong forms for this word
             # Look for ✓ Benar and ✗ Salah in the word's section
-            word_section_pattern = f"### Word \\d+: {word}.*?(?=### Word|---|\Z)"
+            word_section_pattern = rf"### Word \d+: {word}.*?(?=### Word|---|$)"
             word_section = re.search(
                 word_section_pattern, review_content, re.DOTALL | re.IGNORECASE
             )
@@ -173,6 +173,18 @@ class AIService:
 
                 # Calculate accuracy
                 accuracy = int((forms_correct_count / total_forms) * 100)
+
+                # Extract form values from table
+                # Pattern: | Form | Correct Answer | ...
+                forms_data = {}
+                for form_name in ["Verb", "Noun", "Adjective", "Adverb", "Opposite"]:
+                    pattern = rf"\| {form_name} \| ([^|]+) \|"
+                    match = re.search(pattern, section_text)
+                    if match:
+                        form_value = match.group(1).strip()
+                        # Skip if it's a placeholder or empty
+                        if form_value and form_value != "..." and form_value != "-":
+                            forms_data[form_name.lower()] = form_value
 
                 # Determine which forms are correct/weak
                 forms_correct = []
@@ -218,12 +230,14 @@ class AIService:
                 else:
                     forms_weak.append("opposite")
 
-                # Update profile
+                # Update profile with word_type and forms_data
                 self.profile_manager.update_vocabulary_mastery(
                     word=word,
+                    word_type=word_type if word_type else None,
                     accuracy_score=accuracy,
                     forms_correct=forms_correct,
                     forms_weak=forms_weak,
+                    forms_data=forms_data,
                     date=date,
                 )
 
@@ -241,11 +255,12 @@ class AIService:
         2. Correct any mistakes (spelling, wrong forms, or missing forms)
         3. Add missing forms if the student left them blank
         4. Provide Indonesian meanings for each word form
+        5. Identify the PRIMARY word type (n/v/adj/adv) - the most common usage
         
         **Output format:**
         Start directly with word reviews. NO greeting or intro paragraphs.
         
-        ### Word 1: [Word]
+        ### Word 1: [Word] (type: [n/v/adj/adv])
         
         | Form | Correct Answer | Student's Answer | Status | Arti |
         |------|----------------|------------------|--------|------|

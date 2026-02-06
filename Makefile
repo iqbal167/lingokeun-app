@@ -1,4 +1,4 @@
-.PHONY: help generate review profile material vocab lint fix format check
+.PHONY: help generate review profile material vocab-stats vocab-add vocab-word vocab-update lint fix format check
 
 help:
 	@echo "Available commands:"
@@ -8,7 +8,9 @@ help:
 	@echo "  make material       - List suggested learning materials"
 	@echo "  make material TOPIC=\"Topic Name\"  - Generate specific material"
 	@echo "  make vocab-stats    - Show vocabulary statistics"
-	@echo "  make vocab-add WORD=\"word\" MEANING=\"meaning\"  - Add new vocabulary"
+	@echo "  make vocab-add WORD=\"word\" TYPE=\"n/v/adj/adv\" MEANING=\"meaning\"  - Add new vocabulary"
+	@echo "  make vocab-word WORD=\"word\"  - Show word details and transformations"
+	@echo "  make vocab-update WORD=\"word\" FORM=\"noun\" VALUE=\"facilitation\"  - Update word form"
 	@echo "  make lint           - Check code with ruff"
 	@echo "  make fix            - Auto-fix linting issues"
 	@echo "  make format         - Format code with ruff"
@@ -51,6 +53,21 @@ vocab-add:
 	else \
 		uv run lingokeun vocab --add "$(WORD)"; \
 	fi
+
+vocab-word:
+	@if [ -z "$(WORD)" ]; then \
+		echo "Error: WORD is required. Usage: make vocab-word WORD=\"facilitate\""; \
+		exit 1; \
+	fi
+	uv run lingokeun vocab --word "$(WORD)"
+
+vocab-update:
+	@if [ -z "$(WORD)" ] || [ -z "$(FORM)" ] || [ -z "$(VALUE)" ]; then \
+		echo "Error: WORD, FORM, and VALUE are required."; \
+		echo "Usage: make vocab-update WORD=\"facilitate\" FORM=\"noun\" VALUE=\"facilitation\""; \
+		exit 1; \
+	fi
+	uv run lingokeun vocab --update-form "$(WORD):$(FORM):$(VALUE)"
 
 lint:
 	uv run ruff check .

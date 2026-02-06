@@ -426,6 +426,12 @@ def manage_vocabulary(
     word: str = typer.Option(
         None, "--word", "-w", help="Show details of specific word"
     ),
+    update_form: str = typer.Option(
+        None,
+        "--update-form",
+        "-u",
+        help="Update word form: word:form_type:value (e.g., facilitate:noun:facilitation)",
+    ),
 ):
     """
     Manage vocabulary database.
@@ -434,11 +440,41 @@ def manage_vocabulary(
     - uv run lingokeun vocab --add prominently --type adv --meaning "secara menonjol"
     - uv run lingokeun vocab --stats
     - uv run lingokeun vocab --word facilitate
+    - uv run lingokeun vocab --update-form "facilitate:noun:facilitation"
     """
     from .ai_service import AIService
 
     service = AIService()
     vocab_db = service.profile_manager.vocab_db
+
+    # Update word form
+    if update_form:
+        parts = update_form.split(":")
+        if len(parts) != 3:
+            typer.secho(
+                "❌ Format: word:form_type:value (e.g., facilitate:noun:facilitation)",
+                fg=typer.colors.RED,
+            )
+            return
+
+        word_name, form_type, form_value = parts
+        valid_forms = ["verb", "noun", "adjective", "adverb", "opposite"]
+
+        if form_type.lower() not in valid_forms:
+            typer.secho(
+                f"❌ Invalid form type. Use: {', '.join(valid_forms)}",
+                fg=typer.colors.RED,
+            )
+            return
+
+        success = vocab_db.update_word_form(word_name, form_type, form_value)
+
+        if success:
+            typer.secho(f"\n✅ Updated {word_name}", fg=typer.colors.GREEN, bold=True)
+            typer.echo(f"   {form_type.title()}: {form_value}")
+        else:
+            typer.secho(f"❌ Word '{word_name}' not found", fg=typer.colors.RED)
+        return
 
     # Add new vocabulary
     if add:
@@ -503,11 +539,13 @@ def manage_vocabulary(
 
         typer.echo(f"📌 Source: {details['source']}")
 
+        # Show forms with values
         if details["forms"]:
-            typer.echo("\n📝 Forms Mastery:")
-            for form, mastered in details["forms"].items():
-                status = "✅" if mastered else "❌"
-                typer.echo(f"   {status} {form.title()}")
+            typer.echo("\n📝 Word Forms:")
+            for form, data in details["forms"].items():
+                status = "✅" if data["is_mastered"] else "❌"
+                value = data["value"] if data["value"] else "-"
+                typer.echo(f"   {status} {form.title()}: {value}")
 
         if details["history"]:
             typer.echo("\n📈 Review History:")

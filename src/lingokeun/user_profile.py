@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from .vocabulary_db import VocabularyDatabase
 
 
@@ -283,13 +283,17 @@ class UserProfileManager:
         forms_correct: list[str],
         forms_weak: list[str],
         date: str,
+        word_type: Optional[str] = None,
+        forms_data: Optional[Dict[str, str]] = None,
     ) -> None:
         """Update vocabulary mastery tracking using SQLite."""
         self.vocab_db.update_vocabulary_mastery(
             word=word,
+            word_type=word_type,
             accuracy_score=accuracy_score,
             forms_correct=forms_correct,
             forms_weak=forms_weak,
+            forms_data=forms_data,
             date=date,
         )
 
