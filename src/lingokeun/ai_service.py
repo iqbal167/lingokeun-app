@@ -174,17 +174,38 @@ class AIService:
                 # Calculate accuracy
                 accuracy = int((forms_correct_count / total_forms) * 100)
 
-                # Extract form values from table
-                # Pattern: | Form | Correct Answer | ...
+                # Extract form values and meanings from table
+                # Pattern: | Form | Correct Answer | ... | Status | Arti |
                 forms_data = {}
+                forms_meanings = {}
+                meaning = None
+
                 for form_name in ["Verb", "Noun", "Adjective", "Adverb", "Opposite"]:
-                    pattern = rf"\| {form_name} \| ([^|]+) \|"
+                    # Extract form value and meaning
+                    # Pattern: | Form | value | ... | status | meaning |
+                    pattern = (
+                        rf"\| {form_name} \| ([^|]+) \| [^|]+ \| [^|]+ \| ([^|]+) \|"
+                    )
                     match = re.search(pattern, section_text)
                     if match:
                         form_value = match.group(1).strip()
-                        # Skip if it's a placeholder or empty
+                        form_meaning = match.group(2).strip()
+
+                        # Save form value
                         if form_value and form_value != "..." and form_value != "-":
                             forms_data[form_name.lower()] = form_value
+
+                        # Save form meaning
+                        if (
+                            form_meaning
+                            and form_meaning != "..."
+                            and form_meaning != "-"
+                        ):
+                            forms_meanings[form_name.lower()] = form_meaning
+
+                            # Use Verb meaning as main word meaning
+                            if form_name == "Verb" and not meaning:
+                                meaning = form_meaning
 
                 # Determine which forms are correct/weak
                 forms_correct = []
@@ -230,14 +251,16 @@ class AIService:
                 else:
                     forms_weak.append("opposite")
 
-                # Update profile with word_type and forms_data
+                # Update profile with word_type, forms_data, forms_meanings, and meaning
                 self.profile_manager.update_vocabulary_mastery(
                     word=word,
                     word_type=word_type if word_type else None,
+                    meaning=meaning,
                     accuracy_score=accuracy,
                     forms_correct=forms_correct,
                     forms_weak=forms_weak,
                     forms_data=forms_data,
+                    forms_meanings=forms_meanings,
                     date=date,
                 )
 

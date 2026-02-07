@@ -38,6 +38,7 @@ class VocabularyDatabase:
                 word_id INTEGER NOT NULL,
                 form_type TEXT NOT NULL,
                 form_value TEXT,
+                form_meaning TEXT,
                 is_mastered BOOLEAN DEFAULT 0,
                 FOREIGN KEY (word_id) REFERENCES vocabulary(id),
                 UNIQUE(word_id, form_type)
@@ -131,7 +132,9 @@ class VocabularyDatabase:
         forms_weak: list[str],
         date: str,
         word_type: Optional[str] = None,
+        meaning: Optional[str] = None,
         forms_data: Optional[Dict[str, str]] = None,
+        forms_meanings: Optional[Dict[str, str]] = None,
     ) -> None:
         """Update vocabulary mastery after review."""
         conn = sqlite3.connect(self.db_path)
@@ -153,45 +156,47 @@ class VocabularyDatabase:
         cursor.execute("SELECT id FROM vocabulary WHERE word = ?", (word_lower,))
         word_id = cursor.fetchone()[0]
 
-        # Update vocabulary stats (including word_type if provided)
-        if word_type:
-            cursor.execute(
-                """
-                UPDATE vocabulary 
-                SET total_reviews = total_reviews + 1,
-                    accuracy_score = ?,
-                    word_type = ?,
-                    last_reviewed = ?,
-                    updated_at = ?
-                WHERE id = ?
-                """,
-                (accuracy_score, word_type, date, now, word_id),
-            )
-        else:
-            cursor.execute(
-                """
-                UPDATE vocabulary 
-                SET total_reviews = total_reviews + 1,
-                    accuracy_score = ?,
-                    last_reviewed = ?,
-                    updated_at = ?
-                WHERE id = ?
-                """,
-                (accuracy_score, date, now, word_id),
-            )
+        # Build update query dynamically
+        updates = [
+            "total_reviews = total_reviews + 1",
+            "accuracy_score = ?",
+            "last_reviewed = ?",
+            "updated_at = ?",
+        ]
+        params = [accuracy_score, date, now]
 
-        # Update forms mastery with values
+        if word_type:
+            updates.append("word_type = ?")
+            params.append(word_type)
+
+        if meaning:
+            updates.append("meaning = ?")
+            params.append(meaning)
+
+        params.append(word_id)
+
+        cursor.execute(
+            f"""
+            UPDATE vocabulary 
+            SET {", ".join(updates)}
+            WHERE id = ?
+            """,
+            params,
+        )
+
+        # Update forms mastery with values and meanings
         all_forms = ["verb", "noun", "adjective", "adverb", "opposite"]
         for form in all_forms:
             is_mastered = 1 if form in forms_correct else 0
             form_value = forms_data.get(form) if forms_data else None
+            form_meaning = forms_meanings.get(form) if forms_meanings else None
 
             cursor.execute(
                 """
-                INSERT OR REPLACE INTO forms_mastery (word_id, form_type, form_value, is_mastered)
-                VALUES (?, ?, ?, ?)
+                INSERT OR REPLACE INTO forms_mastery (word_id, form_type, form_value, form_meaning, is_mastered)
+                VALUES (?, ?, ?, ?, ?)
                 """,
-                (word_id, form, form_value, is_mastered),
+                (word_id, form, form_value, form_meaning, is_mastered),
             )
 
         # Add to review history
@@ -318,7 +323,7 @@ class VocabularyDatabase:
         # Get forms mastery with values
         cursor.execute(
             """
-            SELECT form_type, form_value, is_mastered 
+            SELECT form_type, form_value, form_meaning, is_mastered 
             FROM forms_mastery 
             WHERE word_id = ?
             """,
@@ -328,7 +333,8 @@ class VocabularyDatabase:
         for form_row in cursor.fetchall():
             forms[form_row[0]] = {
                 "value": form_row[1],
-                "is_mastered": bool(form_row[2]),
+                "meaning": form_row[2],
+                "is_mastered": bool(form_row[3]),
             }
 
         # Get review history

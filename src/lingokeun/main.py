@@ -539,13 +539,14 @@ def manage_vocabulary(
 
         typer.echo(f"📌 Source: {details['source']}")
 
-        # Show forms with values
+        # Show forms with values and meanings
         if details["forms"]:
             typer.echo("\n📝 Word Forms:")
             for form, data in details["forms"].items():
                 status = "✅" if data["is_mastered"] else "❌"
                 value = data["value"] if data["value"] else "-"
-                typer.echo(f"   {status} {form.title()}: {value}")
+                meaning = data["meaning"] if data["meaning"] else "-"
+                typer.echo(f"   {status} {form.title()}: {value} ({meaning})")
 
         if details["history"]:
             typer.echo("\n📈 Review History:")
