@@ -1,4 +1,4 @@
-.PHONY: help generate review profile material vocab-stats vocab-add vocab-word vocab-update lint fix format check
+.PHONY: help generate review profile material vocab-stats vocab-add vocab-word vocab-update tokens lint fix format check
 
 help:
 	@echo "Available commands:"
@@ -11,6 +11,7 @@ help:
 	@echo "  make vocab-add WORD=\"word\" TYPE=\"n/v/adj/adv\" MEANING=\"meaning\"  - Add new vocabulary"
 	@echo "  make vocab-word WORD=\"word\"  - Show word details and transformations"
 	@echo "  make vocab-update WORD=\"word\" FORM=\"noun\" VALUE=\"facilitation\"  - Update word form"
+	@echo "  make tokens         - Show AI token usage statistics"
 	@echo "  make lint           - Check code with ruff"
 	@echo "  make fix            - Auto-fix linting issues"
 	@echo "  make format         - Format code with ruff"
@@ -68,6 +69,9 @@ vocab-update:
 		exit 1; \
 	fi
 	uv run lingokeun vocab --update-form "$(WORD):$(FORM):$(VALUE)"
+
+tokens:
+	uv run lingokeun tokens
 
 lint:
 	uv run ruff check .

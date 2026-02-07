@@ -560,5 +560,35 @@ def manage_vocabulary(
     typer.echo("Use --help to see available options")
 
 
+@app.command("tokens")
+def show_token_usage():
+    """Show AI token usage statistics."""
+    from .token_monitor import TokenMonitor
+    
+    monitor = TokenMonitor()
+    stats = monitor.get_stats()
+    
+    typer.secho("=" * 50, fg=typer.colors.BLUE)
+    typer.secho("🤖 AI TOKEN USAGE STATISTICS", fg=typer.colors.BLUE, bold=True)
+    typer.secho("=" * 50, fg=typer.colors.BLUE)
+    
+    typer.echo("\n📊 Total Usage:")
+    typer.echo(f"   Input Tokens:  {stats['total_input']:,}")
+    typer.echo(f"   Output Tokens: {stats['total_output']:,}")
+    typer.secho(f"   Total Tokens:  {stats['total']:,}", fg=typer.colors.CYAN, bold=True)
+    
+    typer.echo(f"\n📈 API Calls: {stats['total_calls']}")
+    
+    if stats['recent']:
+        typer.echo("\n🕐 Recent Operations (last 10):")
+        for entry in stats['recent']:
+            timestamp = entry['timestamp'][:19].replace('T', ' ')
+            operation = entry['operation']
+            total = entry['total_tokens']
+            typer.echo(f"   {timestamp} | {operation:25s} | {total:,} tokens")
+    
+    typer.echo()
+
+
 if __name__ == "__main__":
     app()

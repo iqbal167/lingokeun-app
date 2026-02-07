@@ -1,5 +1,6 @@
 from .config import settings
 from .user_profile import UserProfileManager
+from .token_monitor import TokenMonitor
 from google import genai
 
 
@@ -7,6 +8,7 @@ class AIService:
     def __init__(self):
         self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
         self.profile_manager = UserProfileManager()
+        self.token_monitor = TokenMonitor()
 
     def generate_daily_task(self) -> str:
         """
@@ -139,6 +141,16 @@ class AIService:
             response = self.client.models.generate_content(
                 model="gemini-3-flash-preview", contents=prompt
             )
+            
+            # Log token usage
+            if hasattr(response, 'usage_metadata'):
+                self.token_monitor.log_usage(
+                    operation="generate_daily_task",
+                    input_tokens=response.usage_metadata.prompt_token_count,
+                    output_tokens=response.usage_metadata.candidates_token_count,
+                    model="gemini-3-flash-preview"
+                )
+            
             return response.text
         except Exception as e:
             return f"Error generating task from AI: {str(e)}"
@@ -157,7 +169,8 @@ class AIService:
         for word, word_type in matches:
             # Count correct/wrong forms for this word
             # Look for ✓ Benar and ✗ Salah in the word's section
-            word_section_pattern = rf"### Word \d+: {word}.*?(?=### Word|---|$)"
+            # Pattern: from ### Word X to next ### Word or Summary section
+            word_section_pattern = rf"### Word \d+: {word}.*?(?=### Word \d+:|---\s*\*\*Summary|$)"
             word_section = re.search(
                 word_section_pattern, review_content, re.DOTALL | re.IGNORECASE
             )
@@ -277,8 +290,18 @@ class AIService:
         1. Review each word and its transformations
         2. Correct any mistakes (spelling, wrong forms, or missing forms)
         3. Add missing forms if the student left them blank
-        4. Provide Indonesian meanings for each word form
+        4. Provide Indonesian meanings WITH CONTEXT for each word form
         5. Identify the PRIMARY word type (n/v/adj/adv) - the most common usage
+        
+        **IMPORTANT for "Arti" column:**
+        - Provide meaning with CONTEXT/NUANCE in parentheses
+        - Help distinguish similar words (e.g., streamline vs simplify)
+        - Format: "Arti utama (konteks/nuansa penggunaan)"
+        - Examples:
+          * streamline: "Menyederhanakan (membuat lebih efisien/ramping)"
+          * simplify: "Menyederhanakan (membuat lebih mudah dipahami)"
+          * facilitate: "Memfasilitasi (memudahkan proses/kegiatan)"
+          * alignment: "Penyelarasan (menyamakan arah/tujuan)"
         
         **Output format:**
         Start directly with word reviews. NO greeting or intro paragraphs.
@@ -287,7 +310,11 @@ class AIService:
         
         | Form | Correct Answer | Student's Answer | Status | Arti |
         |------|----------------|------------------|--------|------|
-        | Verb | ... | ... | ✓/✗/+ | ... |
+        | Verb | ... | ... | ✓/✗/+ | Arti (konteks penggunaan) |
+        | Noun | ... | ... | ✓/✗/+ | Arti (konteks penggunaan) |
+        | Adjective | ... | ... | ✓/✗/+ | Arti (konteks penggunaan) |
+        | Adverb | ... | ... | ✓/✗/+ | Arti (konteks penggunaan) |
+        | Opposite | ... | ... | ✓/✗/+ | Arti (konteks penggunaan) |
         
         (Repeat for all words)
         
@@ -302,6 +329,16 @@ class AIService:
             response = self.client.models.generate_content(
                 model="gemini-3-flash-preview", contents=prompt
             )
+            
+            # Log token usage
+            if hasattr(response, 'usage_metadata'):
+                self.token_monitor.log_usage(
+                    operation="review_task1",
+                    input_tokens=response.usage_metadata.prompt_token_count,
+                    output_tokens=response.usage_metadata.candidates_token_count,
+                    model="gemini-3-flash-preview"
+                )
+            
             return response.text
         except Exception as e:
             return f"Error reviewing task: {str(e)}"
@@ -361,6 +398,16 @@ class AIService:
             response = self.client.models.generate_content(
                 model="gemini-3-flash-preview", contents=prompt
             )
+            
+            # Log token usage
+            if hasattr(response, 'usage_metadata'):
+                self.token_monitor.log_usage(
+                    operation="review_task2",
+                    input_tokens=response.usage_metadata.prompt_token_count,
+                    output_tokens=response.usage_metadata.candidates_token_count,
+                    model="gemini-3-flash-preview"
+                )
+            
             return response.text
         except Exception as e:
             return f"Error reviewing task: {str(e)}"
@@ -423,6 +470,16 @@ class AIService:
             response = self.client.models.generate_content(
                 model="gemini-3-flash-preview", contents=prompt
             )
+            
+            # Log token usage
+            if hasattr(response, 'usage_metadata'):
+                self.token_monitor.log_usage(
+                    operation="review_task3",
+                    input_tokens=response.usage_metadata.prompt_token_count,
+                    output_tokens=response.usage_metadata.candidates_token_count,
+                    model="gemini-3-flash-preview"
+                )
+            
             return response.text
         except Exception as e:
             return f"Error reviewing task: {str(e)}"
@@ -483,6 +540,16 @@ class AIService:
             response = self.client.models.generate_content(
                 model="gemini-3-flash-preview", contents=prompt
             )
+            
+            # Log token usage
+            if hasattr(response, 'usage_metadata'):
+                self.token_monitor.log_usage(
+                    operation="review_task4",
+                    input_tokens=response.usage_metadata.prompt_token_count,
+                    output_tokens=response.usage_metadata.candidates_token_count,
+                    model="gemini-3-flash-preview"
+                )
+            
             return response.text
         except Exception as e:
             return f"Error reviewing task: {str(e)}"
@@ -539,6 +606,17 @@ class AIService:
             response = self.client.models.generate_content(
                 model="gemini-3-flash-preview", contents=prompt
             )
+            
+            # Log token usage
+            if hasattr(response, 'usage_metadata'):
+                self.token_monitor.log_usage(
+                    operation="generate_learning_material",
+                    input_tokens=response.usage_metadata.prompt_token_count,
+                    output_tokens=response.usage_metadata.candidates_token_count,
+                    model="gemini-3-flash-preview",
+                    metadata={"topic": topic}
+                )
+            
             return response.text
         except Exception as e:
             return f"Error generating material: {str(e)}"
