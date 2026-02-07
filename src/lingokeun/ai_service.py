@@ -32,6 +32,16 @@ class AIService:
         - CONSIDER these unreviewed words (from user's reading): {", ".join(vocab_context["unreviewed"][:10]) if vocab_context["unreviewed"] else "None"}
         - Select 5 words total: prioritize weak words, then unreviewed words, then new words
         
+        **IMPORTANT for Word Transformation Challenge:**
+        - If selected word is NOT in base form (e.g., "prominently", "alignment"), automatically convert to BASE FORM
+        - Base form examples:
+          * "prominently" (adv) → use "prominent" (adj) for transformation
+          * "alignment" (noun) → use "align" (verb) for transformation
+          * "reliability" (noun) → use "reliable" (adj) for transformation
+        - The BASE FORM will be used ONLY in Word Transformation Challenge section
+        - In Translation Challenge and Conversation, you can use ANY form (including the original word from vocabulary)
+        - This ensures Word Transformation Challenge can generate all 5 forms properly
+        
         **Task:**
         1. Select **5 vocabulary words** following the rules above
         2. Create a daily learning challenge based on these 5 selected words
@@ -44,22 +54,31 @@ class AIService:
         Please generate a Markdown response with this exact structure:
         
         # Daily Task
-        **Selected Vocabulary:** [List the 5 words here]
+        **Selected Vocabulary:** [List the 5 ORIGINAL words from vocabulary here]
         **Focus:** Clear Professional Communication
         
-        ## 💡 Daily Tip
-        Provide one practical tip for improving English communication skills in a professional tech environment.
+        ## 💡 Daily Tips
         
-        **Focus areas for tips (rotate between these):**
-        - Casual conversational responses (Sure, That sounds good, Exactly, Got it, Makes sense, Fair enough)
-        - Natural workplace reactions (Oh I see, Right, Gotcha, Yep, Absolutely, For sure)
-        - Phrasal verbs in casual context
-        - Informal vs formal register
-        - Common workplace expressions
+        **Casual Expression:**
+        • [One casual phrase] - [Arti dalam Bahasa Indonesia]
+        • Penjelasan: [Brief explanation in Bahasa Indonesia when/how to use]
         
-        Keep it SHORT and actionable. Include ONLY 2-3 example phrases (not 5+).
+        **Phrasal Verb:**
+        • [One phrasal verb] - [Arti dalam Bahasa Indonesia]
+        • Penjelasan: [Brief explanation in Bahasa Indonesia]
+        • Contoh: [Example sentence in English]
         
-        **⚠️ Common Mistake:** Add ONE line about a common mistake to avoid (e.g., "Don't say 'I am agree' → Say 'I agree'")
+        **Collocation:**
+        • [One common collocation] - [Arti dalam Bahasa Indonesia]
+        • Penjelasan: [Brief explanation in Bahasa Indonesia]
+        • Contoh: [Example sentence in English]
+        
+        **Preposition:**
+        • [One preposition usage] - [Arti dalam Bahasa Indonesia]
+        • Penjelasan: [Brief explanation in Bahasa Indonesia why this preposition]
+        • Contoh: [Example sentence in English]
+        
+        **⚠️ Common Mistake:** [One mistake to avoid with Indonesian explanation]
         
         ## 1. Word Transformation Challenge
         For each selected word, create a fill-in-the-blank list for:
